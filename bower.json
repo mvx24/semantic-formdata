@@ -1,0 +1,15 @@
+{
+  "name": "semantic-formdata",
+  "version": "0.0.1",
+  "authors": [
+    "Marc <marc@symbioticsoftware.com"
+  ],
+  "description": "jQuery plugin to extend the functionality of semantic-ui's form module.",
+  "main": "formdata.js",
+  "keywords": [
+    "semantic-ui",
+    "jquery",
+    "forms"
+  ],
+  "license": "MIT"
+}
