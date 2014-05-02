@@ -1,4 +1,4 @@
-/* jshint curly: false */
+/* jshint curly: false, unparam: true */
 'use strict';
 $.formData = $.fn.formData = function(action, rules, data, settings) {
 	var fieldName, fieldRules, field, callback, value, html;
@@ -45,9 +45,24 @@ $.formData = $.fn.formData = function(action, rules, data, settings) {
 				value = '';
 			callback = $.fn.formData.callbacks.set[fieldRules.type];
 			if(callback) {
+				// Decode the value
+				if(!$.fn.formData.settings.noISODates) {
+					switch(fieldRules.type) {
+						case 'date':
+							// Process substrings because new Date(value) assumes the date is midnight UTC and can parse into an entirely different day depending on the browser's timezone offset
+							value = new Date(parseInt(value.substr(0,4)), parseInt(value.substr(5,2)) - 1, parseInt(value.substr(8,2)), 0, 0, 0, 0);
+							break;
+						case 'datetime':
+							value = new Date(value);
+							break;
+						default:
+							// Don't decode all other values into Dates etc. including the time type
+							break;
+					}
+				}
 				obj = callback(fieldRules, field, value);
 				if(obj)
-					$.fn.formData.objects[fieldName] = obj;
+					$.fn.formData.objects[fieldRules.identifier] = obj;
 			}
 			else {
 				switch(fieldRules.type) {
@@ -73,9 +88,38 @@ $.formData = $.fn.formData = function(action, rules, data, settings) {
 				continue;
 			callback = $.fn.formData.callbacks.get[fieldRules.type];
 			if(callback) {
-				value = callback(fieldRules, field, $.fn.formData.objects[fieldName]);
+				value = callback(fieldRules, field, $.fn.formData.objects[fieldRules.identifier]);
 				if(value instanceof Date) {
-					// TODO: convert to iso 8601 string
+					if(fieldRules.type === 'datetime' && $.fn.formData.settings.timezoneOffset && value.getTimezoneOffset() !== $.fn.formData.settings.timezoneOffset) {
+						// Adjust the datetime because the value coming from the form will be a reflection of the exact time in the browser's preferred 
+						// timezone, but may not be the user's set preferred timezone that they want to be functioning in
+						value.setMinutes(value.getMinutes() + (value.getTimezoneOffset() - $.fn.formData.settings.timezoneOffset));
+					}
+					// Encode the value
+					if(!$.fn.formData.settings.noISODates) {
+						var pad = function(num) {
+							if(num.length == 1)
+								return '0' + num;
+							else
+								return '' + num;
+						};
+						switch(fieldRules.type) {
+							case 'date':
+								value = value.getFullYear() + '-' + pad(value.getMonth() + 1) + '-' + pad(value.getDate());
+								break;
+							case 'datetime':
+								// Convert to ISO 8601 string with milliseconds removed (the timezone will always be Z)
+								// http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.43
+								value = value.toISOString().replace(/\.\d*/,'');
+								break;
+							case 'time':
+								// Time probably shouldn't be given as a date, but convert it here just in case
+								value = pad(value.getHours()) + ':' + pad(value.getMinutes()) + ':' + pad(value.getSeconds());;
+								break;
+							default:
+								break;
+						}
+					}
 				}
 				data[fieldName] = value;
 			}
@@ -131,7 +175,7 @@ $.formData = $.fn.formData = function(action, rules, data, settings) {
 	}
 };
 
-// Store returned javascript objects from the set callbacks
+$.fn.formData.settings = {};
 $.fn.formData.objects = {};
 $.fn.formData.callbacks = {
 	render: {
@@ -195,4 +239,95 @@ $.fn.form.settings.rules.max = function(value, max) {
 
 $.fn.form.settings.rules.regex = function(value, regex) {
 	return value.match(regex) !== null;
+};
+
+// Fix the url and email rules which don't allow blank values, use empty instead to check required fields
+// Set $.formData.settings.noEmptyFix = true to disable this fix
+$.fn.formData._emailRule = $.fn.form.settings.rules.email;
+$.fn.formData._urlRule = $.fn.form.settings.rules.url;
+
+$.fn.form.settings.rules.email = function(value) {
+	if(!$.fn.formData.settings.noEmptyFix) {
+		if(value === undefined || value === '')
+			return true;
+	}
+	return $.fn.formData._emailRule.call(this, value);
+}
+
+$.fn.form.settings.rules.url = function(value) {
+	if(!$.fn.formData.settings.noEmptyFix) {
+		if(value === undefined || value === '')
+			return true;
+	}
+	return $.fn.formData._urlRule.call(this, value);
+}
+
+$.fn.formData._dateRule = function($field, past) {
+	var fieldRules = $($field.parents('.ui.form')[0]).form('get validation', $field);
+	var callback = $.fn.formData.callbacks.get[fieldRules.type];
+	if(callback) {
+		var value = callback(fieldRules, $field, $.fn.formData.objects[fieldRules.identifier]);
+		var now = new Date();
+		switch(fieldRules.type) {
+			case 'date':
+				if(past) {
+					now.setHours(0);
+					now.setMinutes(0);
+					now.setSeconds(0);
+					now.setMilliseconds(0);
+				}
+				else {
+					now.setHours(23);
+					now.setMinutes(59);
+					now.setSeconds(59);
+					now.setMilliseconds(999);
+				}
+				break;
+			case 'datetime':
+				if($.fn.formData.settings.timezoneOffset && value.getTimezoneOffset() !== $.fn.formData.settings.timezoneOffset) {
+					// See the same adjustment made above for comments
+					value.setMinutes(value.getMinutes() + (value.getTimezoneOffset() - $.fn.formData.settings.timezoneOffset));
+				}
+				break;
+			default:
+				// All others, not applicable
+				return true;
+		}
+		// Both now and value should have their timezone set to the browser's so they are comparable
+		if(past)
+			return value < now;
+		else
+			return value > now;
+	}
+	return true;
+};
+
+$.fn.form.settings.rules.past = function(value) {
+	return $.fn.formData._dateRule(this, true);
+};
+
+$.fn.form.settings.rules.future = function(value) {
+	return $.fn.formData._dateRule(this, false);
+};
+
+$.fn.form.settings.rules.order = function(stringValue, identifiers) {
+	// Note: this is the form, unlike the normal rule without
+	var $form = this;
+	identifiers = identifiers.split(',');
+	var $field = $form.form('get field', identifiers[0]);
+	var fieldRules = $form.form('get validation', $field);
+	var $otherField = $form.form('get field', identifiers[1]);
+	var otherFieldRules = $form.form('get validation', $otherField);
+	var callback = $.fn.formData.callbacks.get[fieldRules.type];
+	if(callback) {
+		var value = callback(fieldRules, $field, $.fn.formData.objects[identifiers[0]]);
+		var otherValue = callback(otherFieldRules, $otherField, $.fn.formData.objects[identifiers[1]]);
+		var isValid;
+		if(!value || !otherValue)
+			return true;
+		isValid = value < otherValue;
+		// TODO: validate the other field
+		return isValid;
+	}
+	return true;
 };
