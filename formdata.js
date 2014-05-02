@@ -45,8 +45,8 @@ $.formData = $.fn.formData = function(action, rules, data, settings) {
 				value = '';
 			callback = $.fn.formData.callbacks.set[fieldRules.type];
 			if(callback) {
-				// Decode the value
-				if(!$.fn.formData.settings.noISODates) {
+				// Decode the value if needed
+				if(!$.fn.formData.settings.noISODates && !(value instanceof Date)) {
 					switch(fieldRules.type) {
 						case 'date':
 							// Process substrings because new Date(value) assumes the date is midnight UTC and can parse into an entirely different day depending on the browser's timezone offset
