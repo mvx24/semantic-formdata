@@ -150,7 +150,10 @@ $.formData = $.fn.formData = function(action, rules, data, settings) {
 			formSettings = settings.form;
 		if(settings && settings.modal)
 			modalSettings = settings.modal;
-		html = '<div id="modal-formdata" class="ui modal"><i class="close icon"></i><div class="header">' + settings.title + '</div><div id="form-modal-formdata" class="ui form content">';
+		html = '<div id="modal-formdata" class="ui modal"><i class="close icon"></i><div class="ui header">' + settings.title;
+		if(settings && settings.subtitle)
+			html += '<div class="sub header">' + settings.subtitle + '</div>';
+		html += '</div><div id="form-modal-formdata" class="ui form content">';
 		for(fieldName in rules)
 			html += $.formData('render', rules[fieldName]);
 		submitButton = 'Submit';
