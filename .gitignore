@@ -1,0 +1,12 @@
+.DS_Store
+*.bak
+*.sublime-project
+*.sublime-workspace
+.idea
+/bower_components
+/build
+/temp
+/docs
+/node_modules
+.sass-cache
+npm-debug.log

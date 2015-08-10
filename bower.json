@@ -11,5 +11,8 @@
     "jquery",
     "forms"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "semantic-ui": "^1.0.0"
+  }
 }
