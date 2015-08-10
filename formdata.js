@@ -8,31 +8,31 @@ $.formData = $.fn.formData = function(action, rules, data, settings) {
 		fieldRules = rules;
 		callback = $.fn.formData.callbacks.render[fieldRules.type];
 		if(callback) {
-			return callback(fieldRules);
+			html = callback(fieldRules);
 		}
 		else {
 			var placeholder = fieldRules.placeholder || fieldRules.label;
-			var required = false;
 			html = '<div class="field">';
-			for(var i = 0 ; i < fieldRules.rules.length; ++i) {
-				if(fieldRules.rules[i].type === 'empty') {
-					required = true;
-					break;
-				}
-			}
 			html += '<label for="' + fieldRules.identifier + '">' + fieldRules.label + '</label>';
 			if(fieldRules.icon)
-				html += '<div class="ui left labeled icon input">';
+				html += '<div class="ui left icon input">';
 			else
-				html += '<div class="ui labeled input">';
+				html += '<div class="ui input">';
 			html += '<input type="text" id="' + fieldRules.identifier + '" name="' + fieldRules.identifier + '" placeholder="' + placeholder + '" />';
 			if(fieldRules.icon)
 				html += '<i class="' + fieldRules.icon + ' icon"></i>';
-			if(required)
-				html += '<div class="ui corner label"><i class="icon asterisk"></i></div>';
 			html += '</div></div>';
-			return html;
 		}
+		// Add required class if field cannot be empty
+		if(fieldRules.rules) {
+			for(var i = 0 ; i < fieldRules.rules.length; ++i) {
+				if(fieldRules.rules[i].type === 'empty') {
+					html = html.replace('field', 'required field');
+					break;
+				}
+			}
+		}
+		return html;
 	}
 	else if(action === 'set' || action === 'setup') {
 		var obj;
@@ -100,7 +100,7 @@ $.formData = $.fn.formData = function(action, rules, data, settings) {
 					// Encode the value
 					if(!$.fn.formData.settings.noISODates) {
 						var pad = function(num) {
-							if(num.length == 1)
+							if(num.length === 1)
 								return '0' + num;
 							else
 								return '' + num;
@@ -185,7 +185,7 @@ $.fn.formData.objects = {};
 $.fn.formData.callbacks = {
 	render: {
 		bool: function(fieldRules) {
-			var html = '<div class="field"><div class="ui toggle checkbox">';
+			var html = '<div class="inline field"><div class="ui checkbox">';
 			html += '<input type="checkbox" id="' + fieldRules.identifier + '" name="' + fieldRules.identifier + '" />';
 			html += '<label for="' + fieldRules.identifier + '">' + fieldRules.label + '</label>';
 			html += '</div></div>';

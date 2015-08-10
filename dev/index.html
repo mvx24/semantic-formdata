@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script src="/jquery/dist/jquery.js" type="text/javascript"></script>
+	<script src="/semantic-ui/dist/semantic.js" type="text/javascript"></script>
+	<script src="/semantic.formdata.js" type="text/javascript"></script>
+	<link href="/semantic-ui/dist/semantic.css" rel="stylesheet" type="text/css" />
+	<script type="text/javascript">
+		rules = {
+			maxTen: {
+				identifier: 'one',
+				type: 'integer',
+				label: 'Number Less than 10',
+				rules: [ {
+					type: 'empty',
+					prompt: 'Please enter a number.'
+				},
+				{
+					type: 'integer',
+					prompt: 'Please enter a number.'
+				},
+				{
+					type: 'max[10]',
+					prompt: 'Please do not go over 10.'
+				}
+				]
+			},
+			username: {
+				identifier: 'username',
+				label: 'Username',
+				icon: 'user',
+				rules: [ {
+					type: 'empty',
+					prompt: 'Please enter a username.'
+				}
+				]
+			},
+			email: {
+				identifier: 'email',
+				label: 'Email',
+				icon: 'at',
+				rules: [ {
+					type: 'empty',
+					prompt: 'Please enter an email.'
+				},
+				{
+					type: 'email',
+					prompt: 'Please enter a valid email.'
+				}
+				]
+			},
+			gender: {
+				identifier: 'gender',
+				label: 'Gender',
+				rules: [{
+					type: 'empty',
+					prompt: 'Please choose a gender.'
+				}
+				],
+				choices: {
+					'M': 'Male',
+					'F': 'Female',
+					'U': 'Unknown'
+				},
+				type: 'choices'
+			},
+			check: {
+				identifier: 'check',
+				type: 'bool',
+				label: 'Check Me'
+			}
+		};
+
+		$(function() {
+			var $container = $('#testfields');
+			for(fieldRule in rules)
+				if(rules.hasOwnProperty(fieldRule))
+					$container.append($.formData('render', rules[fieldRule]));
+			$(".ui.form").form(rules, {
+				inline: true, on: 'blur',
+				onSuccess: function() {
+					var data = {};
+					$(this).formData('get', rules, data);
+					$("#block-data").text(JSON.stringify(data));
+				}
+			});
+			$('.ui.form').formData('setup', rules);
+
+			$('#button-modal').click(function() {
+				var data = { firstName: 8};
+				var formSettings = { inline: true, on: 'blur' };
+				$.formData('modal', rules, data, { form: formSettings, onSuccess: function(data) { $('#block-data').text(JSON.stringify(data)); }, title: 'Awesome test dialog!', submitButton: 'Go!' });
+			});
+		});
+	</script>
+</head>
+<body>
+	<div class="ui page grid">
+	<div class="row"><div class="column">
+		<br />
+		<form class="ui form segment" onsubmit="return false;">
+			<h2 class="ui dividing header">Test Form</h2>
+			<div id="testfields"></div><br />
+			<div class="ui blue submit button">Submit</div>
+			<!-- When not validating inline add ui error message div --> <!--
+			<div class="ui error message"></div>
+			-->
+		</form>
+	</div></div>
+	<div class="row"><div class="column">
+		<div class="ui segment">
+			<h4 class="ui dividing header">Data</h4>
+			<div id="block-data"></div>
+		</div>
+		<div id="button-modal" class="ui button">Modal Form</div>
+	</div></div>
+	</div>
+</body>
+</html>
