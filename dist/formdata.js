@@ -1146,7 +1146,10 @@ $.formData = $.fn.formData = function(action, rules, data, settings) {
 		if(fieldRules.rules) {
 			for(var i = 0 ; i < fieldRules.rules.length; ++i) {
 				if(fieldRules.rules[i].type === 'empty') {
-					html = html.replace('field', 'required field');
+					if(typeof html === 'string')
+						html = html.replace('field', 'required field');
+					else if(html.nodeType === 1)
+						html.className = 'required ' + html.className;
 					break;
 				}
 			}
