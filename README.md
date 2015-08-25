@@ -23,20 +23,20 @@ Accessible by the general form $('.foo').formData('behavior name', rules, data, 
 
 #### Behavior Names:
 
-* **'render'**, *fieldRules, data* - renders the field into html tags, using a template matching the type of the field and sets the value if supplied.
+* **'render'**, *fieldRules, data* - renders the field into html or a DOM node, using a template or render callback method matching the type of the field
 * **'set'**, *rules, data* - set the values of the form fields with data from a model.
 * **'setup'**, *rules* - same as set with no data, to get the fields initialized
-* **'get'**, *rules, data* - get the values of all the form fields with their backbone field names appropriately encoded, will parse integers, decimals, and bools.
-* **'modal'**, *rules, data, settings* - constructs and runs a modal that automatically sets and gets the data. Settings must have a title variable set, and an onSuccess method for accepting the data when submitted and the modal is closed. Other settings include form, for settings form settings, modal for modal settings, submitButton for the text on the submit button, and subtitle for a subtitle on the modal header.
+* **'get'**, *rules, data* - get the values of all the form fields with their backbone field names appropriately encoded, will parse integers, decimals, and bools
+* **'modal'**, *rules, data, settings* - constructs and runs a modal that automatically sets and gets the data. *Settings must have a title variable set, and an onSuccess method for accepting the data when submitted and the modal is closed. Other settings include form, for settings form settings, modal for modal settings, submitButton for the text on the submit button, and subtitle for a subtitle on the modal header. Modal will only render for pure semantic forms and not with custom rendering that returns DOM nodes.*
 
 FormData Callbacks
 -------------------------------
 
 Configurable under the objects `$.fn.formData.callbacks.{render, set, get}`
 
-* **render.\[type\]**, *fieldRules* - return html to use as the field
+* **render.\[type\]**, *fieldRules* - return html or a DOM node to use as the field
 * **set.\[type\]**, *fieldRules, $element, value* - set the value and optionally configure a field, return an optional javascript object (e.g. Pikaday object) to later be used in the get.\[type\] callback
-* **get.\[type\]**, *fieldRules, $element, javascript object* - functionality to return the value directly instead of the get method. Return a Date object and it will be automatically converted to a iso 8601 string.
+* **get.\[type\]**, *fieldRules, $element, javascript object* - functionality to return the value directly instead of the get method. Return a Date object and it will be automatically converted to a iso 8601 string
 
 If no get callback is specified for a type, the value will be assumed to already be in the correct text format.
 
